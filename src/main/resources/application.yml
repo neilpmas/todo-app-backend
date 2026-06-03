@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: template-application
+  datasource:
+    url: ${DATABASE_URL}
+  r2dbc:
+    url: ${R2DBC_URL}
+    pool:
+      initial-size: 1
+      max-size: 5
+  flyway:
+    enabled: true
+    schemas: app
+    default-schema: app
+    create-schemas: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH0_ISSUER_URI:https://test.example.com/}
+          audiences: ${AUTH0_AUDIENCE:https://api.test.example.com}
+
+app:
+  environment: ${APP_ENVIRONMENT:local}
+
+grpc:
+  server:
+    port: 9090
+    security:
+      enabled: false   # auth is handled at the HTTP layer by the BFF

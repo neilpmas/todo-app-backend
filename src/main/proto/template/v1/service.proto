@@ -1,0 +1,16 @@
+syntax = "proto3";
+package template.v1;
+
+option java_package = "com.template.grpc.v1";
+option java_multiple_files = true;
+
+service TemplateService {
+  rpc GetServerInfo(GetServerInfoRequest) returns (GetServerInfoResponse);
+}
+
+message GetServerInfoRequest {}
+
+message GetServerInfoResponse {
+  string version = 1;
+  string environment = 2;
+}
