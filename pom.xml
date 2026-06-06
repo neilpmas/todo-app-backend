@@ -121,6 +121,11 @@
 				<artifactId>protoc-gen-grpc-java</artifactId>
 				<version>1.81.0</version>
 			</dependency>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>protoc-gen-grpc-java</artifactId>
+				<version>1.81.0</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
