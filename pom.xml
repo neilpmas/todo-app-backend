@@ -123,13 +123,17 @@
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
+				<artifactId>grpc-bom</artifactId>
 				<version>1.81.0</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.81.0</version>
+				<groupId>com.google.protobuf</groupId>
+				<artifactId>protobuf-bom</artifactId>
+				<version>4.28.2</version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>
@@ -153,12 +157,12 @@
 					<sourceDirectories>
 						<sourceDirectory>src/main/proto</sourceDirectory>
 					</sourceDirectories>
-					<protoc>3.25.1</protoc>
+					<protoc>4.28.2</protoc>
 					<plugins>
 						<plugin kind="binary-maven">
 							<groupId>io.grpc</groupId>
 							<artifactId>protoc-gen-grpc-java</artifactId>
-							<version>1.63.0</version>
+							<version>1.81.0</version>
 						</plugin>
 					</plugins>
 				</configuration>
