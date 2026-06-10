@@ -1,2 +1,0 @@
--- Initial schema placeholder
--- Add tables here as the domain model develops
