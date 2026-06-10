@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package todos.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "com.template.todos.v1";
+option java_outer_classname = "TodosProto";
+
+service TodosService {
+  rpc CreateTodo(CreateTodoRequest) returns (Todo);
+  rpc GetTodos(GetTodosRequest) returns (GetTodosResponse);
+  rpc CompleteTodo(CompleteTodoRequest) returns (Todo);
+  rpc DeleteTodo(DeleteTodoRequest) returns (DeleteTodoResponse);
+}
+
+message Todo {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  google.protobuf.Timestamp completed_at = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message CreateTodoRequest {
+  string title = 1;
+}
+
+message GetTodosRequest {}
+
+message GetTodosResponse {
+  repeated Todo todos = 1;
+}
+
+message CompleteTodoRequest {
+  string id = 1;
+}
+
+message DeleteTodoRequest {
+  string id = 1;
+}
+
+message DeleteTodoResponse {
+  bool success = 1;
+}

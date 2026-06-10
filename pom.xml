@@ -14,7 +14,7 @@
 	<name>template-application</name>
 	<description>Template application backend</description>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>24</java.version>
 		<spring-modulith.version>2.0.6</spring-modulith.version>
 		<flyway.version>12.8.1</flyway.version>
 	</properties>
@@ -104,6 +104,11 @@
 			<groupId>org.testcontainers</groupId>
 			<artifactId>r2dbc</artifactId>
 			<version>1.21.4</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
