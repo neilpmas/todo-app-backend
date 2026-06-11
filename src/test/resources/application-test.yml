@@ -5,7 +5,3 @@ spring:
     default-schema: app
     create-schemas: true
 
-# Provide dummy values to satisfy ${DATABASE_URL} and ${R2DBC_URL} in application.yml
-# @ServiceConnection will override these with the actual Testcontainers connection
-DATABASE_URL: jdbc:postgresql://localhost:5432/unused
-R2DBC_URL: r2dbc:postgresql://localhost:5432/unused
