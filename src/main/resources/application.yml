@@ -2,11 +2,11 @@ spring:
   application:
     name: template-application
   datasource:
-    url: ${DATABASE_URL}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/placeholder}
     username: ${DATABASE_USERNAME:}
     password: ${DATABASE_PASSWORD:}
   r2dbc:
-    url: ${R2DBC_URL}
+    url: ${R2DBC_URL:r2dbc:postgresql://localhost:5432/placeholder}
     username: ${DATABASE_USERNAME:}
     password: ${DATABASE_PASSWORD:}
     pool:

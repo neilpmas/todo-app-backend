@@ -1,5 +1,7 @@
 package com.template;
 
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -12,8 +14,18 @@ public abstract class AbstractIntegrationTest {
     @Container
     @SuppressWarnings("resource")
     static final PostgreSQLContainer<?> POSTGRES =
-        new PostgreSQLContainer<>("postgres:16-alpine")
-            .withReuse(true);
+        new PostgreSQLContainer<>("postgres:16-alpine");
+
+    @BeforeAll
+    static void runMigrations() {
+        Flyway.configure()
+            .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+            .schemas("app")
+            .createSchemas(true)
+            .locations("classpath:db/migration")
+            .load()
+            .migrate();
+    }
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
