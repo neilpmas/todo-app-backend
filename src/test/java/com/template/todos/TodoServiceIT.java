@@ -1,38 +1,16 @@
 package com.template.todos;
 
+import com.template.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
-class TodoServiceIT {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("DATABASE_URL", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("R2DBC_URL", () -> "r2dbc:postgresql://"
-            + postgres.getHost() + ":" + postgres.getMappedPort(5432)
-            + "/" + postgres.getDatabaseName());
-        registry.add("spring.r2dbc.username", postgres::getUsername);
-        registry.add("spring.r2dbc.password", postgres::getPassword);
-    }
+class TodoServiceIT extends AbstractIntegrationTest {
 
     @Autowired
     private TodoService todoService;
@@ -106,12 +84,10 @@ class TodoServiceIT {
         String userId2 = "user-2";
         Todo todo = todoService.createTodo(userId1, "Todo").block();
 
-        // Complete should not find it
         StepVerifier.create(todoService.completeTodo(userId2, todo.id()))
             .expectNextCount(0)
             .verifyComplete();
 
-        // Delete should not delete it
         StepVerifier.create(todoService.deleteTodo(userId2, todo.id()))
             .verifyComplete();
 
