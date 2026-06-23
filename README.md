@@ -21,23 +21,40 @@ This is the core business logic layer. It receives authenticated requests from t
 
 ## Architecture
 
+```mermaid
+C4Context
+  title System Context — Backend
+
+  System_Ext(bff, "Cloudflare Worker (BFF)", "Proxies authenticated requests via gRPC-Web")
+  System_Ext(mobile, "Mobile / Desktop", "Direct HTTPS + Bearer token")
+  System(backend, "Spring Boot on Fly.io", "Domain logic, gRPC API, OAuth 2.0 resource server")
+  SystemDb_Ext(db, "Neon Postgres", "Persistent storage, Flyway-managed schema")
+  System_Ext(idp, "Auth0", "JWKS endpoint — token validation only")
+
+  Rel(bff, backend, "gRPC-Web + Bearer token")
+  Rel(mobile, backend, "HTTPS + Bearer token")
+  Rel(backend, db, "R2DBC")
+  Rel(backend, idp, "JWKS fetch for JWT validation")
 ```
-Cloudflare Workers (BFF)          Mobile / Desktop clients
-         │                                   │
-         │  gRPC-Web + Bearer token          │  HTTPS + Bearer token
-         │                                   │
-         └──────────────┬────────────────────┘
-                        │
-                        ▼
-             Spring Boot on Fly.io
-             (Spring Modulith)
-                        │
-              ┌─────────┴─────────┐
-              │                   │
-              ▼                   ▼
-           Neon                Auth0
-        (Postgres)        (JWKS endpoint —
-                          token validation only)
+
+```mermaid
+C4Container
+  title Container — Backend
+
+  System_Ext(bff, "BFF / Mobile", "Authenticated callers")
+
+  Container(grpc, "gRPC Endpoint", "Spring Boot, port 9090", "Accepts gRPC-Web requests, maps to domain calls")
+  Container(rest, "HTTP Endpoint", "Spring Boot, port 8080", "Health, actuator, future REST routes")
+  Container(auth, "Auth Module", "Spring Security", "OAuth 2.0 resource server, JWT validation via Auth0 JWKS")
+  Container(domain, "Domain Module", "Spring Modulith", "Business logic, domain model")
+  Container(infra, "Infrastructure", "R2DBC + Flyway", "Reactive Postgres access, schema migrations")
+  ContainerDb(db, "Neon Postgres", "PostgreSQL", "Persistent storage")
+
+  Rel(bff, grpc, "gRPC-Web + Bearer token")
+  Rel(grpc, auth, "Validates JWT")
+  Rel(grpc, domain, "Domain calls")
+  Rel(domain, infra, "Repository access")
+  Rel(infra, db, "R2DBC queries")
 ```
 
 ## Module Structure (Spring Modulith)
