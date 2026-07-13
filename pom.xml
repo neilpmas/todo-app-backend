@@ -72,6 +72,11 @@
 			<artifactId>javax.annotation-api</artifactId>
 			<version>1.3.2</version>
 		</dependency>
+		<dependency>
+			<groupId>dev.neilmason</groupId>
+			<artifactId>connectrpc-spring-boot-starter</artifactId>
+			<version>0.1.0</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.modulith</groupId>
@@ -116,6 +121,12 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>dev.neilmason</groupId>
+			<artifactId>connectrpc-spring-boot-starter-test</artifactId>
+			<version>0.1.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -145,13 +156,24 @@
 				<artifactId>protoc-gen-grpc-java</artifactId>
 				<version>1.82.1</version>
 			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.82.1</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<!-- Stopgap for dogfooding connectrpc-spring-boot-starter (task-connectrpc-spring-boot-starter
+		 Phase 5.2): GitHub Packages, not Maven Central yet, pending real Central publish
+		 (Phase 8 of that project). Reads require an authenticated PAT even for public repos;
+		 configure a matching <server> with read:packages credentials in ~/.m2/settings.xml
+		 locally, and an equivalent secret in CI. -->
+	<repositories>
+		<repository>
+			<id>github-connectrpc-spring</id>
+			<url>https://maven.pkg.github.com/neilpmas/connectrpc-spring</url>
+		</repository>
+		<repository>
+			<id>github-connectrpc-spring-boot</id>
+			<url>https://maven.pkg.github.com/neilpmas/connectrpc-spring-boot</url>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>

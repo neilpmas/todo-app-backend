@@ -1,7 +1,25 @@
 version: 2
+registries:
+  # Stopgap for dogfooding connectrpc-spring-boot-starter (task-connectrpc-spring-boot-starter
+  # Phase 5.2): GitHub Packages, not Maven Central yet. GH_PACKAGES_PAT is a Dependabot secret
+  # (Settings -> Secrets and variables -> Dependabot, not the regular Actions secrets store)
+  # holding a PAT with read:packages scope.
+  github-connectrpc-spring:
+    type: maven-repository
+    url: https://maven.pkg.github.com/neilpmas/connectrpc-spring
+    username: neilpmas
+    password: ${{secrets.GH_PACKAGES_PAT}}
+  github-connectrpc-spring-boot:
+    type: maven-repository
+    url: https://maven.pkg.github.com/neilpmas/connectrpc-spring-boot
+    username: neilpmas
+    password: ${{secrets.GH_PACKAGES_PAT}}
 updates:
   - package-ecosystem: "maven"
     directory: "/"
+    registries:
+      - github-connectrpc-spring
+      - github-connectrpc-spring-boot
     schedule:
       interval: "weekly"
   - package-ecosystem: "github-actions"
