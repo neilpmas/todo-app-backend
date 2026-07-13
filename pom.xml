@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>dev.neilmason</groupId>
 			<artifactId>connectrpc-spring-boot-starter</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1</version>
 		</dependency>
 
 		<dependency>
@@ -124,7 +124,7 @@
 		<dependency>
 			<groupId>dev.neilmason</groupId>
 			<artifactId>connectrpc-spring-boot-starter-test</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -150,11 +150,6 @@
 				<version>4.35.1</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.82.2</version>
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>

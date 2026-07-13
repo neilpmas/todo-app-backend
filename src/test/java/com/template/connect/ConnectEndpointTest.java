@@ -6,14 +6,18 @@ import com.template.todos.TodoService;
 import com.template.todos.v1.CreateTodoRequest;
 import com.template.todos.v1.GetTodosRequest;
 import com.template.todos.v1.GetTodosResponse;
+import com.template.todos.v1.TodosServiceGrpc;
+import dev.neilmason.boot.connect.test.AutoConfigureConnectTestClient;
+import dev.neilmason.boot.connect.test.ConnectTestClient;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.r2dbc.autoconfigure.R2dbcAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -36,14 +40,36 @@ import static org.mockito.Mockito.when;
     R2dbcAutoConfiguration.class,
     DataSourceAutoConfiguration.class
 })
+@AutoConfigureConnectTestClient
 class ConnectEndpointTest {
 
     private static final MediaType APPLICATION_PROTO = MediaType.parseMediaType("application/proto");
+    private static final String TEST_USER = "test-user";
 
-    private WebTestClient webTestClient;
+    // springSecurity() registers Spring Security's WebTestClient mock support (needed for
+    // mockJwt() to have any effect), but it returns a MockServerConfigurer -- a type only
+    // WebTestClient.MockServerSpec.apply() accepts (i.e. only the
+    // .bindToApplicationContext(ctx).apply(springSecurity()) construction path).
+    // WebTestClient.Builder.apply() and ConnectTestClient.mutateWith() both require a
+    // WebTestClientConfigurer instead, which is a different, incompatible interface -- so
+    // springSecurity() cannot be wired in via the auto-configured WebTestClient.Builder at
+    // all. Defining our own WebTestClient bean, built the old way, lets
+    // ConnectTestClientAutoConfiguration back off its own and consume this one instead.
+    @TestConfiguration(proxyBeanMethods = false)
+    static class SecurityTestClientConfig {
+        @Bean
+        WebTestClient webTestClient(ApplicationContext applicationContext) {
+            return WebTestClient.bindToApplicationContext(applicationContext)
+                .apply(SecurityMockServerConfigurers.springSecurity())
+                .build();
+        }
+    }
 
     @Autowired
-    private ApplicationContext applicationContext;
+    private ConnectTestClient connectTestClient;
+
+    @Autowired
+    private WebTestClient webTestClient;
 
     @MockitoBean
     private TodoService todoService;
@@ -51,76 +77,50 @@ class ConnectEndpointTest {
     @MockitoBean
     private TodoRepository todoRepository;
 
-    @BeforeEach
-    void setUp() {
-        webTestClient = WebTestClient.bindToApplicationContext(applicationContext)
-            .apply(SecurityMockServerConfigurers.springSecurity())
-            .build();
+    private ConnectTestClient authenticated() {
+        return connectTestClient.mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject(TEST_USER)));
     }
 
     @Test
-    void getTodos_shouldReturnProtobufResponse() throws Exception {
+    void getTodos_shouldReturnProtobufResponse() {
         UUID todoId = UUID.randomUUID();
         Instant now = Instant.now();
-        Todo todo = new Todo(todoId, "test-user", "Test Todo", null, now);
+        Todo todo = new Todo(todoId, TEST_USER, "Test Todo", null, now);
 
-        when(todoService.getTodos("test-user")).thenReturn(Flux.just(todo));
+        when(todoService.getTodos(TEST_USER)).thenReturn(Flux.just(todo));
 
-        byte[] responseBytes = webTestClient
-            .mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject("test-user")))
-            .post()
-            .uri("/connect/todos.v1.TodosService/GetTodos")
-            .contentType(APPLICATION_PROTO)
-            .bodyValue(GetTodosRequest.getDefaultInstance().toByteArray())
-            .exchange()
-            .expectStatus().isOk()
-            .expectHeader().contentType(APPLICATION_PROTO)
-            .expectBody(byte[].class)
-            .returnResult()
-            .getResponseBody();
+        GetTodosResponse response = authenticated().call(
+            TodosServiceGrpc.getGetTodosMethod(),
+            GetTodosRequest.getDefaultInstance());
 
-        assertThat(responseBytes).isNotNull();
-        GetTodosResponse response = GetTodosResponse.parseFrom(responseBytes);
         assertThat(response.getTodosCount()).isEqualTo(1);
         assertThat(response.getTodos(0).getId()).isEqualTo(todoId.toString());
         assertThat(response.getTodos(0).getTitle()).isEqualTo("Test Todo");
     }
 
     @Test
-    void createTodo_shouldReturnCreatedTodo() throws Exception {
+    void createTodo_shouldReturnCreatedTodo() {
         UUID todoId = UUID.randomUUID();
         Instant now = Instant.now();
-        Todo todo = new Todo(todoId, "test-user", "New Todo", null, now);
+        Todo todo = new Todo(todoId, TEST_USER, "New Todo", null, now);
 
-        when(todoService.createTodo(eq("test-user"), eq("New Todo"))).thenReturn(Mono.just(todo));
+        when(todoService.createTodo(eq(TEST_USER), eq("New Todo"))).thenReturn(Mono.just(todo));
 
-        CreateTodoRequest request = CreateTodoRequest.newBuilder()
-            .setTitle("New Todo")
-            .build();
+        com.template.todos.v1.Todo protoTodo = authenticated().call(
+            TodosServiceGrpc.getCreateTodoMethod(),
+            CreateTodoRequest.newBuilder().setTitle("New Todo").build());
 
-        byte[] responseBytes = webTestClient
-            .mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject("test-user")))
-            .post()
-            .uri("/connect/todos.v1.TodosService/CreateTodo")
-            .contentType(APPLICATION_PROTO)
-            .bodyValue(request.toByteArray())
-            .exchange()
-            .expectStatus().isOk()
-            .expectHeader().contentType(APPLICATION_PROTO)
-            .expectBody(byte[].class)
-            .returnResult()
-            .getResponseBody();
-
-        assertThat(responseBytes).isNotNull();
-        com.template.todos.v1.Todo protoTodo = com.template.todos.v1.Todo.parseFrom(responseBytes);
         assertThat(protoTodo.getId()).isEqualTo(todoId.toString());
         assertThat(protoTodo.getTitle()).isEqualTo("New Todo");
     }
 
+    // Error-path tests stay on raw WebTestClient: ConnectTestClient.call() asserts
+    // isOk() internally, so it cannot observe a 4xx Connect error response.
+
     @Test
     void unknownMethod_shouldReturn404() {
         webTestClient
-            .mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject("test-user")))
+            .mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject(TEST_USER)))
             .post()
             .uri("/connect/todos.v1.TodosService/NonExistent")
             .contentType(APPLICATION_PROTO)
