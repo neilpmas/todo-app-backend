@@ -18,5 +18,11 @@ jobs:
           java-version: "24"
           distribution: "temurin"
           cache: maven
+          server-id: github-connectrpc-spring-boot
+          server-username: GITHUB_ACTOR
+          server-password: GH_PACKAGES_PAT
       - name: Build with Maven
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GH_PACKAGES_PAT: ${{ secrets.GH_PACKAGES_PAT }}
         run: ./mvnw -B verify
