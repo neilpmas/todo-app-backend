@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.template</groupId>
 	<artifactId>todo-app-backend</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>todo-app-backend</name>
 	<description>Todo app backend</description>
 	<properties>
