@@ -1,0 +1,10 @@
+target/
+.git/
+.idea/
+.env
+.env.*
+application-local.yml
+application-local.properties
+.certs/
+.junie/
+*.log

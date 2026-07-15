@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.template</groupId>
-	<artifactId>template-application</artifactId>
+	<artifactId>todo-app-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>template-application</name>
-	<description>Template application backend</description>
+	<name>todo-app-backend</name>
+	<description>Todo app backend</description>
 	<properties>
 		<java.version>24</java.version>
 		<spring-modulith.version>2.1.0</spring-modulith.version>
