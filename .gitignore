@@ -37,3 +37,6 @@ application-local.properties
 ### Local dev ###
 .certs/
 .junie/
+
+### macOS ###
+.DS_Store
