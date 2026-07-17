@@ -86,8 +86,23 @@ class TodoServiceTest {
         when(repository.delete(existingTodo)).thenReturn(Mono.empty());
 
         StepVerifier.create(todoService.deleteTodo(userId, todoId))
+            .expectNext(true)
             .verifyComplete();
 
         verify(repository).delete(existingTodo);
+    }
+
+    @Test
+    void deleteTodo_shouldReturnFalseWhenNotFound() {
+        String userId = "user-1";
+        UUID todoId = UUID.randomUUID();
+
+        when(repository.findByIdAndUserId(todoId, userId)).thenReturn(Mono.empty());
+
+        StepVerifier.create(todoService.deleteTodo(userId, todoId))
+            .expectNext(false)
+            .verifyComplete();
+
+        verify(repository, never()).delete(any(Todo.class));
     }
 }
