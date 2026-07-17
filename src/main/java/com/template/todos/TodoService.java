@@ -34,8 +34,9 @@ public class TodoService {
             });
     }
 
-    public Mono<Void> deleteTodo(String userId, UUID id) {
+    public Mono<Boolean> deleteTodo(String userId, UUID id) {
         return repository.findByIdAndUserId(id, userId)
-            .flatMap(repository::delete);
+            .flatMap(todo -> repository.delete(todo).thenReturn(true))
+            .defaultIfEmpty(false);
     }
 }

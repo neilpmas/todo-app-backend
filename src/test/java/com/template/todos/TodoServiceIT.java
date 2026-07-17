@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import reactor.test.StepVerifier;
 
+import java.util.Objects;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -56,21 +58,20 @@ class TodoServiceIT extends AbstractIntegrationTest {
     @Test
     void testCompleteTodo() {
         String userId = "user-1";
-        Todo todo = todoService.createTodo(userId, "Todo").block();
+        Todo todo = Objects.requireNonNull(todoService.createTodo(userId, "Todo").block());
 
         StepVerifier.create(todoService.completeTodo(userId, todo.id()))
-            .assertNext(updatedTodo -> {
-                assertThat(updatedTodo.completedAt()).isNotNull();
-            })
+            .assertNext(updatedTodo -> assertThat(updatedTodo.completedAt()).isNotNull())
             .verifyComplete();
     }
 
     @Test
     void testDeleteTodo() {
         String userId = "user-1";
-        Todo todo = todoService.createTodo(userId, "Todo").block();
+        Todo todo = Objects.requireNonNull(todoService.createTodo(userId, "Todo").block());
 
         StepVerifier.create(todoService.deleteTodo(userId, todo.id()))
+            .expectNext(true)
             .verifyComplete();
 
         StepVerifier.create(todoRepository.findById(todo.id()))
@@ -82,13 +83,14 @@ class TodoServiceIT extends AbstractIntegrationTest {
     void testCannotTouchOtherUsersTodo() {
         String userId1 = "user-1";
         String userId2 = "user-2";
-        Todo todo = todoService.createTodo(userId1, "Todo").block();
+        Todo todo = Objects.requireNonNull(todoService.createTodo(userId1, "Todo").block());
 
         StepVerifier.create(todoService.completeTodo(userId2, todo.id()))
             .expectNextCount(0)
             .verifyComplete();
 
         StepVerifier.create(todoService.deleteTodo(userId2, todo.id()))
+            .expectNext(false)
             .verifyComplete();
 
         StepVerifier.create(todoRepository.findById(todo.id()))

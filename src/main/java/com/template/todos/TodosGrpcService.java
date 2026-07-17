@@ -2,6 +2,7 @@ package com.template.todos;
 
 import com.google.protobuf.Timestamp;
 import com.template.todos.v1.*;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import org.springframework.security.core.Authentication;
@@ -9,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 @GrpcService
@@ -25,13 +27,15 @@ public class TodosGrpcService extends TodosServiceGrpc.TodosServiceImplBase {
         if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
             return jwt.getSubject();
         }
-        throw new RuntimeException("Unauthorized");
+        throw Status.UNAUTHENTICATED.withDescription("Unauthorized").asRuntimeException();
     }
 
     @Override
     public void createTodo(CreateTodoRequest request, StreamObserver<com.template.todos.v1.Todo> responseObserver) {
         String userId = getUserId();
-        com.template.todos.Todo todo = todoService.createTodo(userId, request.getTitle()).block();
+        com.template.todos.Todo todo = Objects.requireNonNull(
+            todoService.createTodo(userId, request.getTitle()).block(),
+            "createTodo returned an empty result; repository.save is expected to always emit the persisted Todo");
         responseObserver.onNext(mapToProto(todo));
         responseObserver.onCompleted();
     }
@@ -57,16 +61,20 @@ public class TodosGrpcService extends TodosServiceGrpc.TodosServiceImplBase {
             responseObserver.onNext(mapToProto(todo));
             responseObserver.onCompleted();
         } else {
-            responseObserver.onError(new RuntimeException("Todo not found"));
+            responseObserver.onError(Status.NOT_FOUND.withDescription("Todo not found").asRuntimeException());
         }
     }
 
     @Override
     public void deleteTodo(DeleteTodoRequest request, StreamObserver<DeleteTodoResponse> responseObserver) {
         String userId = getUserId();
-        todoService.deleteTodo(userId, UUID.fromString(request.getId())).block();
-        responseObserver.onNext(DeleteTodoResponse.newBuilder().setSuccess(true).build());
-        responseObserver.onCompleted();
+        Boolean deleted = todoService.deleteTodo(userId, UUID.fromString(request.getId())).block();
+        if (Boolean.TRUE.equals(deleted)) {
+            responseObserver.onNext(DeleteTodoResponse.newBuilder().setSuccess(true).build());
+            responseObserver.onCompleted();
+        } else {
+            responseObserver.onError(Status.NOT_FOUND.withDescription("Todo not found").asRuntimeException());
+        }
     }
 
     private com.template.todos.v1.Todo mapToProto(com.template.todos.Todo todo) {
