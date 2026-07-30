@@ -156,21 +156,6 @@
 				<artifactId>protoc-gen-grpc-java</artifactId>
 				<version>1.83.0</version>
 			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.0</version>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.0</version>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.0</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
