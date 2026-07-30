@@ -37,6 +37,12 @@ logging:
 
 app:
   environment: ${APP_ENVIRONMENT:local}
+  migrations:
+    # How long MigrationGateWebFilter parks a Connect request that arrives while
+    # DatabaseMigrationRunner is still working, before giving up with a 503. Only a
+    # backstop in practice: a database that never comes up fails Flyway's own
+    # connect-retries (~30s) first, which errors the gate immediately.
+    gate-timeout: 60s
 
 grpc:
   server:
