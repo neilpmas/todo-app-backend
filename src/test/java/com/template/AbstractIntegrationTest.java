@@ -8,7 +8,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public abstract class AbstractIntegrationTest {
 
-    static final PostgreSQLContainer<?> POSTGRES =
+    // public so FlywayPostBindMigrationIT can share the container without extending this
+    // class -- it needs the opposite spring.flyway.enabled setting.
+    public static final PostgreSQLContainer<?> POSTGRES =
         new PostgreSQLContainer<>("postgres:16-alpine");
 
     static {
