@@ -49,4 +49,8 @@ grpc:
     port: 9090
     address: 127.0.0.1
     security:
-      enabled: false   # auth is handled at the HTTP layer by the BFF
+      # This listener is bound to 127.0.0.1 only, so it's unreachable from outside the
+      # container and isn't part of the production request path. Real traffic goes
+      # through the Connect bridge on port 8080, which enforces the OAuth2 resource
+      # server config above.
+      enabled: false
