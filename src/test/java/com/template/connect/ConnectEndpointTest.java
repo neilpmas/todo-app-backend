@@ -18,11 +18,10 @@ import org.springframework.boot.r2dbc.autoconfigure.R2dbcAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.MockServerConfigurer;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -45,7 +44,6 @@ import static org.mockito.Mockito.when;
 class ConnectEndpointTest {
 
     private static final String TEST_USER = "test-user";
-    private static final MediaType APPLICATION_PROTO = MediaType.parseMediaType("application/proto");
 
     @TestConfiguration(proxyBeanMethods = false)
     static class SecurityTestConfig {
@@ -57,9 +55,6 @@ class ConnectEndpointTest {
 
     @Autowired
     private ConnectTestClient connectTestClient;
-
-    @Autowired
-    private WebTestClient webTestClient;
 
     @MockitoBean
     private TodoService todoService;
@@ -115,20 +110,13 @@ class ConnectEndpointTest {
         assertThat(error.code()).isEqualTo("unimplemented");
     }
 
-    // Stays on raw WebTestClient: an unauthenticated request never reaches the Connect
-    // protocol layer at all -- Spring Security's default BearerTokenAuthenticationEntryPoint
-    // rejects it at the filter chain with a bare 401 and no body, so there's no Connect JSON
-    // error for callExpectingError to parse (it requires a response body -- see
-    // connectrpc-spring-boot#9/#10 fix notes; this is a new, separate gap, worth its own
-    // upstream issue).
     @Test
     void unauthenticated_shouldReturn401() {
-        webTestClient
-            .post()
-            .uri("/connect/todos.v1.TodosService/GetTodos")
-            .contentType(APPLICATION_PROTO)
-            .bodyValue(new byte[0])
-            .exchange()
-            .expectStatus().isUnauthorized();
+        ConnectError error = connectTestClient.callExpectingError(
+            TodosServiceGrpc.getGetTodosMethod(),
+            GetTodosRequest.getDefaultInstance());
+
+        assertThat(error.httpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(error.code()).isNull(); // rejected before reaching the Connect protocol layer
     }
 }
