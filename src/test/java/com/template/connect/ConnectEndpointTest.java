@@ -8,6 +8,7 @@ import com.template.todos.v1.GetTodosRequest;
 import com.template.todos.v1.GetTodosResponse;
 import com.template.todos.v1.TodosServiceGrpc;
 import dev.neilmason.boot.connect.test.AutoConfigureConnectTestClient;
+import dev.neilmason.boot.connect.test.ConnectError;
 import dev.neilmason.boot.connect.test.ConnectTestClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,11 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.r2dbc.autoconfigure.R2dbcAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.reactive.server.MockServerConfigurer;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -43,25 +44,14 @@ import static org.mockito.Mockito.when;
 @AutoConfigureConnectTestClient
 class ConnectEndpointTest {
 
-    private static final MediaType APPLICATION_PROTO = MediaType.parseMediaType("application/proto");
     private static final String TEST_USER = "test-user";
+    private static final MediaType APPLICATION_PROTO = MediaType.parseMediaType("application/proto");
 
-    // springSecurity() registers Spring Security's WebTestClient mock support (needed for
-    // mockJwt() to have any effect), but it returns a MockServerConfigurer -- a type only
-    // WebTestClient.MockServerSpec.apply() accepts (i.e. only the
-    // .bindToApplicationContext(ctx).apply(springSecurity()) construction path).
-    // WebTestClient.Builder.apply() and ConnectTestClient.mutateWith() both require a
-    // WebTestClientConfigurer instead, which is a different, incompatible interface -- so
-    // springSecurity() cannot be wired in via the auto-configured WebTestClient.Builder at
-    // all. Defining our own WebTestClient bean, built the old way, lets
-    // ConnectTestClientAutoConfiguration back off its own and consume this one instead.
     @TestConfiguration(proxyBeanMethods = false)
-    static class SecurityTestClientConfig {
+    static class SecurityTestConfig {
         @Bean
-        WebTestClient webTestClient(ApplicationContext applicationContext) {
-            return WebTestClient.bindToApplicationContext(applicationContext)
-                .apply(SecurityMockServerConfigurers.springSecurity())
-                .build();
+        MockServerConfigurer springSecurityConfigurer() {
+            return SecurityMockServerConfigurers.springSecurity();
         }
     }
 
@@ -114,23 +104,23 @@ class ConnectEndpointTest {
         assertThat(protoTodo.getTitle()).isEqualTo("New Todo");
     }
 
-    // Error-path tests stay on raw WebTestClient: ConnectTestClient.call() asserts
-    // isOk() internally, so it cannot observe a 4xx Connect error response.
-
     @Test
     void unknownMethod_shouldReturn404() {
-        webTestClient
-            .mutateWith(SecurityMockServerConfigurers.mockJwt().jwt(jwt -> jwt.subject(TEST_USER)))
-            .post()
-            .uri("/connect/todos.v1.TodosService/NonExistent")
-            .contentType(APPLICATION_PROTO)
-            .bodyValue(new byte[0])
-            .exchange()
-            .expectStatus().isNotFound()
-            .expectBody()
-            .jsonPath("$.code").isEqualTo("unimplemented");
+        ConnectError error = authenticated().callExpectingError(
+            TodosServiceGrpc.getGetTodosMethod().toBuilder()
+                .setFullMethodName("todos.v1.TodosService/NonExistent")
+                .build(),
+            GetTodosRequest.getDefaultInstance());
+
+        assertThat(error.code()).isEqualTo("unimplemented");
     }
 
+    // Stays on raw WebTestClient: an unauthenticated request never reaches the Connect
+    // protocol layer at all -- Spring Security's default BearerTokenAuthenticationEntryPoint
+    // rejects it at the filter chain with a bare 401 and no body, so there's no Connect JSON
+    // error for callExpectingError to parse (it requires a response body -- see
+    // connectrpc-spring-boot#9/#10 fix notes; this is a new, separate gap, worth its own
+    // upstream issue).
     @Test
     void unauthenticated_shouldReturn401() {
         webTestClient
