@@ -31,6 +31,13 @@ spring:
           issuer-uri: ${AUTH0_ISSUER_URI:https://test.example.com/}
           audiences: ${AUTH0_AUDIENCE:https://api.test.example.com}
 
+connect:
+  # Only the Cloudflare Workers BFF calls this backend's Connect endpoints, and it
+  # does so server-to-server — no browser is ever in that request path. CORS exists
+  # to govern browser-to-server calls, so there's no legitimate case here for it;
+  # leaving it on (the starter's default) just serves permissive headers nobody uses.
+  cors-enabled: false
+
 logging:
   level:
     org.flywaydb: INFO
