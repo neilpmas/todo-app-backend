@@ -154,22 +154,27 @@
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.1</version>
+				<version>1.84.0</version>
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.1</version>
+				<version>1.84.0</version>
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.1</version>
+				<version>1.84.0</version>
 			</dependency>
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.83.1</version>
+				<version>1.84.0</version>
+			</dependency>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>protoc-gen-grpc-java</artifactId>
+				<version>1.84.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
