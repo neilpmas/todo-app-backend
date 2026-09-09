@@ -84,6 +84,21 @@ jobs:
           fi
           echo "Dump size: $actual_bytes bytes"
 
+      - name: Verify dump content
+        run: |
+          set -euo pipefail
+          # Structural checks only — never print actual row content. This is a
+          # public repo and Actions logs on public repos are world-readable, so
+          # real todo text has no business appearing here.
+          if ! gunzip -c "$filename" | grep -q "CREATE TABLE"; then
+            echo "::error::Dump has no CREATE TABLE statement — schema is missing, not just data."
+            exit 1
+          fi
+          table_count=$(gunzip -c "$filename" | grep -c "^CREATE TABLE" || true)
+          copy_blocks=$(gunzip -c "$filename" | grep -c "^COPY " || true)
+          echo "Tables defined: $table_count"
+          echo "Data sections (COPY blocks): $copy_blocks"
+
       - name: Upload to R2
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
