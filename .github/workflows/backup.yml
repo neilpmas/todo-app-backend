@@ -22,6 +22,13 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get install -y postgresql-client-18
+
+          # PGDG installs v18's binaries under a version-specific dir rather than
+          # replacing /usr/bin/pg_dump (the runner's pre-installed v16 stays the
+          # default on PATH otherwise). Put v18 first for the rest of this job.
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+          export PATH="/usr/lib/postgresql/18/bin:$PATH"
+          which pg_dump
           pg_dump --version
 
       - name: Preflight checks
