@@ -1,0 +1,89 @@
+name: Nightly database backup
+
+on:
+  schedule:
+    # 16:00 UTC = 02:00 Sydney (AEST) / 03:00 (AEDT) — adjust if that drifts too far.
+    - cron: "0 16 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client 18 (matches Neon's server version)
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates gnupg
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-18
+          pg_dump --version
+
+      - name: Preflight checks
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          for name in DATABASE_URL AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY R2_BUCKET; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Secret $name is missing or empty. Check repository secrets."
+              exit 1
+            fi
+          done
+          if [ -z "${{ secrets.R2_ACCOUNT_ID }}" ]; then
+            echo "::error::Secret R2_ACCOUNT_ID is missing or empty."
+            exit 1
+          fi
+
+          echo "Server reports:"
+          psql "$DATABASE_URL" -c "SELECT version();"
+
+          echo "Probing R2 round-trip (put/get/delete)..."
+          probe_file="preflight-probe-$(date -u +%s).txt"
+          echo "preflight ok" > "$probe_file"
+          aws s3 cp "$probe_file" "s3://${R2_BUCKET}/${probe_file}" --endpoint-url "$R2_ENDPOINT"
+          aws s3 cp "s3://${R2_BUCKET}/${probe_file}" "./downloaded-${probe_file}" --endpoint-url "$R2_ENDPOINT"
+          diff "$probe_file" "downloaded-${probe_file}"
+          aws s3 rm "s3://${R2_BUCKET}/${probe_file}" --endpoint-url "$R2_ENDPOINT"
+          echo "R2 round-trip OK."
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          filename="todo-app-backup-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+          echo "filename=$filename" >> "$GITHUB_ENV"
+          pg_dump --no-owner --no-privileges "$DATABASE_URL" | gzip > "$filename"
+
+          # A dump against an empty/wrong database still produces a small valid
+          # .gz file — fail loudly instead of silently "succeeding" with junk.
+          min_bytes=200
+          actual_bytes=$(stat -c%s "$filename")
+          if [ "$actual_bytes" -lt "$min_bytes" ]; then
+            echo "::error::Dump is suspiciously small ($actual_bytes bytes, expected >= $min_bytes). Aborting before upload."
+            exit 1
+          fi
+          echo "Dump size: $actual_bytes bytes"
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+          aws s3 cp "$filename" "s3://${{ secrets.R2_BUCKET }}/${filename}" \
+            --endpoint-url "https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com"
+          echo "Uploaded $filename to R2 bucket ${{ secrets.R2_BUCKET }}."
