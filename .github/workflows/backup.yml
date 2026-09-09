@@ -56,6 +56,15 @@ jobs:
           echo "Server reports:"
           psql "$DATABASE_URL" -c "SELECT version();"
 
+          # Diagnostics for the CREATE TABLE check below — names only, never row
+          # content. Safe to print even in this public repo's Actions log.
+          echo "Connected as:"
+          psql "$DATABASE_URL" -c "SELECT current_user, current_database();"
+          echo "Schemas visible to this role:"
+          psql "$DATABASE_URL" -c "\dn"
+          echo "Tables visible in the app schema:"
+          psql "$DATABASE_URL" -c "\dt app.*"
+
           echo "Probing R2 round-trip (put/get/delete)..."
           probe_file="preflight-probe-$(date -u +%s).txt"
           echo "preflight ok" > "$probe_file"
