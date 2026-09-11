@@ -39,6 +39,12 @@ connect:
   cors-enabled: false
 
 logging:
+  # ECS format so `requestId`/`userId`/`action`/etc. added via SLF4J's fluent
+  # addKeyValue() API land as real JSON fields, not just embedded in the message
+  # string. Built into Spring Boot since 3.4 -- no extra dependency needed.
+  structured:
+    format:
+      console: ecs
   level:
     org.flywaydb: INFO
 
