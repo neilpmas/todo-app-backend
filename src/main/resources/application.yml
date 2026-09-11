@@ -48,6 +48,20 @@ logging:
   level:
     org.flywaydb: INFO
 
+sentry:
+  # Empty DSN is the SDK's own documented no-op state -- it logs a debug line and
+  # sends nothing, rather than failing to start. Safe to leave unset until a
+  # Sentry project actually exists; no code change needed to turn it on later.
+  dsn: ${SENTRY_DSN:}
+  environment: ${APP_ENVIRONMENT:local}
+  # Error tracking only for now -- no performance/tracing spans, to stay well
+  # within a free-tier event quota and because nothing here needs latency
+  # tracing yet. Revisit if/when that's actually useful.
+  traces-sample-rate: 0.0
+  # Request bodies/headers can carry a user's actual todo content -- don't
+  # forward that to a third party by default.
+  send-default-pii: false
+
 app:
   environment: ${APP_ENVIRONMENT:local}
   migrations:
