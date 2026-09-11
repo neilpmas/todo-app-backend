@@ -53,6 +53,21 @@ jobs:
             exit 1
           fi
 
+          # Neon branches can share the same database/role name, so a fresh
+          # connection string can look correct while pointing at the wrong
+          # branch entirely -- this bit us for months (see
+          # template-improvements.md, 2026-09-09 "branch mixup"). Assert the
+          # host explicitly rather than relying on the schema check below to
+          # catch it indirectly, so a recurrence fails with a clear cause
+          # instead of a debugging session.
+          EXPECTED_ENDPOINT_ID="quiet-waterfall"
+          DB_HOST=$(echo "$DATABASE_URL" | sed -E 's#^[a-zA-Z]+://[^@]+@([^/:?]+).*#\1#')
+          echo "Connecting to host: $DB_HOST"
+          if [[ "$DB_HOST" != *"$EXPECTED_ENDPOINT_ID"* ]]; then
+            echo "::error::BACKUP_DATABASE_URL points at host '$DB_HOST', which doesn't match the known-good production endpoint (expected to contain '$EXPECTED_ENDPOINT_ID'). This looks like the Neon branch-mixup bug from 2026-09-09 recurring -- see template-improvements.md before changing this secret. Refusing to proceed."
+            exit 1
+          fi
+
           echo "Server reports:"
           psql "$DATABASE_URL" -c "SELECT version();"
 
