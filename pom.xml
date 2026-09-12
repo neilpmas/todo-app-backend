@@ -76,7 +76,7 @@
 		<dependency>
 			<groupId>dev.neilmason</groupId>
 			<artifactId>connectrpc-spring-boot-starter</artifactId>
-			<version>0.2.1</version>
+			<version>0.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>io.sentry</groupId>
@@ -130,7 +130,7 @@
 		<dependency>
 			<groupId>dev.neilmason</groupId>
 			<artifactId>connectrpc-spring-boot-starter-test</artifactId>
-			<version>0.2.1</version>
+			<version>0.2.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
