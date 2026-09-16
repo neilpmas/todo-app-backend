@@ -3,7 +3,7 @@
 # Keep this in sync with pom.xml's <java.version> -- a mismatch between the build JDK
 # and the pom's target release has caused subtle bytecode/runtime issues before
 # (see template-improvements.md).
-ARG JAVA_VERSION=24
+ARG JAVA_VERSION=26
 
 FROM eclipse-temurin:${JAVA_VERSION}-jdk AS build
 WORKDIR /app
