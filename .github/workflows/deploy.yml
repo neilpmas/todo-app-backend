@@ -6,6 +6,13 @@ on:
     branches: [main]
     types: [completed]
 
+# Dependabot merges now trigger CI on main, so several deploys can queue at once.
+# Serialize them rather than racing `flyctl deploy` runs against each other;
+# don't cancel one that's already deploying.
+concurrency:
+  group: fly-prod
+  cancel-in-progress: false
+
 jobs:
   deploy:
     if: github.event.workflow_run.conclusion == 'success'

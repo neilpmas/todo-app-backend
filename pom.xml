@@ -18,6 +18,10 @@
 		<spring-modulith.version>2.1.1</spring-modulith.version>
 		<flyway.version>13.8.0</flyway.version>
 		<sentry.version>8.58.0</sentry.version>
+		<!-- One property for the gRPC BOM and the protoc codegen plugin: Dependabot can't edit
+		     the version inside the plugin's <plugin kind="binary-maven"> config, so it left that at
+		     1.81.0 and kept appending duplicate protoc-gen-grpc-java entries to dependencyManagement. -->
+		<grpc.version>1.84.0</grpc.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -146,7 +150,7 @@
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-bom</artifactId>
-				<version>1.84.0</version>
+				<version>${grpc.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -156,21 +160,6 @@
 				<version>4.36.2</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.84.0</version>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.84.0</version>
-			</dependency>
-			<dependency>
-				<groupId>io.grpc</groupId>
-				<artifactId>protoc-gen-grpc-java</artifactId>
-				<version>1.84.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -210,7 +199,7 @@
 						<plugin kind="binary-maven">
 							<groupId>io.grpc</groupId>
 							<artifactId>protoc-gen-grpc-java</artifactId>
-							<version>1.81.0</version>
+							<version>${grpc.version}</version>
 						</plugin>
 					</plugins>
 				</configuration>

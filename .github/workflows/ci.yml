@@ -5,6 +5,8 @@ on:
     branches: [ "**" ]
   pull_request:
     branches: [ "**" ]
+  # Manual run on main re-triggers Deploy (it hangs off CI's completion).
+  workflow_dispatch:
 
 jobs:
   build:
