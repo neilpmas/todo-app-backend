@@ -14,7 +14,7 @@
 	<name>todo-app-backend</name>
 	<description>Todo app backend</description>
 	<properties>
-		<java.version>26</java.version>
+		<java.version>27</java.version>
 		<spring-modulith.version>2.1.1</spring-modulith.version>
 		<flyway.version>13.8.0</flyway.version>
 		<sentry.version>8.58.0</sentry.version>
@@ -160,6 +160,14 @@
 				<version>4.36.2</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<!-- Spring Modulith's own ArchUnit (1.4.x) can't read Java 27 class files ("Unsupported
+			     class file major version 71"), which makes ModularityTest fail with "No classes
+			     found". 1.5.x can. Drop this once Spring Modulith ships a Java 27-capable ArchUnit. -->
+			<dependency>
+				<groupId>com.tngtech.archunit</groupId>
+				<artifactId>archunit</artifactId>
+				<version>1.5.1</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
