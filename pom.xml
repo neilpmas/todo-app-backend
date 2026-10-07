@@ -17,7 +17,7 @@
 		<java.version>27</java.version>
 		<spring-modulith.version>2.1.1</spring-modulith.version>
 		<flyway.version>13.9.0</flyway.version>
-		<sentry.version>8.58.0</sentry.version>
+		<sentry.version>8.59.0</sentry.version>
 		<!-- One property for the gRPC BOM and the protoc codegen plugin: Dependabot can't edit
 		     the version inside the plugin's <plugin kind="binary-maven"> config, so it left that at
 		     1.81.0 and kept appending duplicate protoc-gen-grpc-java entries to dependencyManagement. -->
