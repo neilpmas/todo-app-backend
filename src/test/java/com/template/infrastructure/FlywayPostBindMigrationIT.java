@@ -125,6 +125,13 @@ class FlywayPostBindMigrationIT {
 
         @Override
         public void handle(Event event, Context context) {
+            // Record only the first migrate(). If the FlywayMigrationStrategy bean were
+            // removed, the stock initializer would migrate during refresh (port not yet
+            // bound) and DatabaseMigrationRunner's later call would fire this callback a
+            // second time with healthy values, overwriting and hiding the early one.
+            if (this.fired) {
+                return;
+            }
             this.fired = true;
             this.readinessDuringMigration = this.applicationContext.getBean(ApplicationAvailability.class)
                 .getReadinessState();
