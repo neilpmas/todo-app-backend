@@ -8,6 +8,9 @@ on:
   # Manual run on main re-triggers Deploy (it hangs off CI's completion).
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
